@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrookesConnect - Oxford Brookes University</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 临时加载样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #003366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-box {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载覆盖层 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <h2>Loading BrookesConnect...</h2>
+        <p id="loading-status">Initializing application</p>
+    </div>
+    
+    <!-- 错误显示 -->
+    <div class="error-box" id="error-box"></div>
+    
+    <!-- 导航栏占位 -->
+    <nav class="navbar" id="navbar" style="display: none;">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <span>BrookesConnect</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" onclick="showSection('dashboard')"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" class="nav-link" onclick="showSection('students')"><i class="fas fa-users"></i> Students</a>
+                <a href="#" class="nav-link" onclick="showSection('societies')"><i class="fas fa-people-group"></i> Societies</a>
+                <a href="#" class="nav-link" onclick="showSection('matches')"><i class="fas fa-heart"></i> Matches</a>
+                <a href="#" class="nav-link" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a>
+                <a href="#" class="nav-link" onclick="showSection('api-test')"><i class="fas fa-code"></i> API Test</a>
+            </div>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <span class="user-name">Student Portal</span>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主内容区域 -->
+    <main class="main-content" id="main-content" style="display: none;">
+        <!-- 内容将通过JavaScript动态加载 -->
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer" style="display: none;">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-university"></i>
+                <span>BrookesConnect</span>
+            </div>
+            <div class="footer-info">
+                <p>Oxford Brookes University | Student Matching Platform</p>
+                <p class="copyright">© 2025 BrookesConnect. All rights reserved.</p>
+            </div>
+            <div class="footer-links">
+                <a href="#"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+                <a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a>
+                <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 直接内联JavaScript，避免文件加载问题 -->
+    <script>
+        // 配置
+        const CONFIG = {
+            API_ENDPOINTS: [
+                'api/matching.php',
+                './api/matching.php',
+                '/BrookesConnect/api/matching.php',
+                'http://localhost/BrookesConnect/api/matching.php',
+                'emergency_fix.php'
+            ],
+            DEBUG: true
+        };
+        
+        // 更新加载状态
+        function updateLoadingStatus(message) {
+            const statusEl = document.getElementById('loading-status');
+            if (statusEl) {
+                statusEl.textContent = message;
+            }
+            if (CONFIG.DEBUG) {
+                console.log('Status:', message);
+            }
+        }
+        
+        // 显示错误
+        function showError(message) {
+            const errorBox = document.getElementById('error-box');
+            if (errorBox) {
+                errorBox.textContent = message;
+                errorBox.style.display = 'block';
+            }
+            console.error('Error:', message);
+        }
+        
+        // 测试API端点
+        async function testAPIEndpoint(url) {
+            try {
+                updateLoadingStatus(`Testing: ${url}`);
+                const response = await fetch(url + '?action=status');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        return { success: true, url: url, data: data };
+                    }
+                }
+            } catch (error) {
+                console.warn(`Endpoint failed: ${url}`, error.message);
+            }
+            return { success: false, url: url };
+        }
+        
+        // 检测可用API端点
+        async function detectWorkingAPI() {
+            updateLoadingStatus('Detecting API endpoints...');
+            
+            for (let endpoint of CONFIG.API_ENDPOINTS) {
+                const result = await testAPIEndpoint(endpoint);
+                if (result.success) {
+                    updateLoadingStatus(`Found working API: ${endpoint}`);
+                    return endpoint;
+                }
+            }
+            
+            showError('All API endpoints failed. Using mock data.');
+            return 'mock';
+        }
+        
+        // API请求函数
+        async function apiRequest(action, params = {}) {
+            if (!window.workingAPI) {
+                window.workingAPI = await detectWorkingAPI();
+            }
+            
+            if (window.workingAPI === 'mock') {
+                return getMockData(action);
+            }
+            
+            try {
+                const query = new URLSearchParams({ action, ...params });
+                const url = `${window.workingAPI}?${query}`;
+                
+                updateLoadingStatus(`Requesting: ${action}`);
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+                
+            } catch (error) {
+                console.error('API Request failed:', error);
+                return getMockData(action);
+            }
+        }
+        
+        // 模拟数据
+        function getMockData(action) {
+            console.warn('Using mock data for:', action);
+            
+            switch(action) {
+                case 'status':
+                    return {
+                        status: 'success',
+                        message: 'Demo Mode - API Connection Failed',
+                        statistics: {
+                            students: 156,
+                            societies: 28,
+                            matches: 342
+                        }
+                    };
+                default:
+                    return {
+                        status: 'success',
+                        message: `Mock data for ${action}`,
+                        data: []
+                    };
+            }
+        }
+        
+        // 加载初始数据
+        async function loadInitialData() {
+            updateLoadingStatus('Loading platform data...');
+            
+            try {
+                // 测试API连接
+                const apiResult = await apiRequest('status');
+                
+                // 显示主界面
+                document.getElementById('navbar').style.display = 'block';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('footer').style.display = 'block';
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                // 渲染仪表板
+                renderDashboard(apiResult);
+                
+            } catch (error) {
+                showError(`Failed to load: ${error.message}`);
+                
+                // 即使失败也显示界面
+                document.getElementById('navbar').style.display = 'block';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('footer').style.display = 'block';
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                renderDashboard({
+                    status: 'error',
+                    message: 'Using fallback data',
+                    statistics: { students: 0, societies: 0, matches: 0 }
+                });
+            }
+        }
+        
+        // 渲染仪表板
+        function renderDashboard(data) {
+            const mainContent = document.getElementById('main-content');
+            
+            let html = `
+                <section class="hero-section">
+                    <div class="hero-content">
+                        <h1>Connect with Peers at Oxford Brookes University</h1>
+                        <p class="hero-subtitle">Find study partners, join societies, and build meaningful connections.</p>
+                        <div class="hero-stats">
+                            <div class="stat-card">
+                                <i class="fas fa-user-graduate"></i>
+                                <div>
+                                    <h3 id="student-count">${data.statistics?.students || 0}</h3>
+                                    <p>Active Students</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-people-group"></i>
+                                <div>
+                                    <h3 id="society-count">${data.statistics?.societies || 0}</h3>
+                                    <p>Societies</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-handshake"></i>
+                                <div>
+                                    <h3 id="match-count">${data.statistics?.matches || 0}</h3>
+                                    <p>Successful Matches</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                </section>
+                
+                <section class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-rocket"></i> Quick Start</h2>
+                        <p>Get started with BrookesConnect</p>
+                    </div>
+                    <div class="quick-actions">
+                        <div class="action-card" onclick="showSection('students')">
+                            <i class="fas fa-users"></i>
+                            <h3>Browse Students</h3>
+                            <p>View student directory and profiles</p>
+                        </div>
+                        <div class="action-card" onclick="showSection('societies')">
+                            <i class="fas fa-people-group"></i>
+                            <h3>Explore Societies</h3>
+                            <p>Discover university clubs and groups</p>
+                        </div>
+                        <div class="action-card" onclick="showSection('matches')">
+                            <i class="fas fa-heart"></i>
+                            <h3>Find Matches</h3>
+                            <p>Get personalized recommendations</p>
+                        </div>
+                        <div class="action-card" onclick="showSection('api-test')">
+                            <i class="fas fa-code"></i>
+                            <h3>Test API</h3>
+                            <p>Check API connectivity</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <section class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-info-circle"></i> System Status</h2>
+                        <p>Current platform information</p>
+                    </div>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="status-label">API Status:</span>
+                            <span class="status-value ${data.status === 'success' ? 'status-good' : 'status-bad'}">
+                                ${data.status === 'success' ? '✅ Connected' : '❌ Disconnected'}
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">API Endpoint:</span>
+                            <span class="status-value">${window.workingAPI || 'Detecting...'}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Message:</span>
+                            <span class="status-value">${data.message || 'N/A'}</span>
+                        </div>
+                    </div>
+                </section>
+            `;
+            
+            mainContent.innerHTML = html;
+        }
+        
+        // 显示不同部分
+        async function showSection(section) {
+            updateLoadingStatus(`Loading ${section}...`);
+            
+            try {
+                let html = '';
+                let data = null;
+                
+                switch(section) {
+                    case 'students':
+                        data = await apiRequest('students');
+                        html = renderStudents(data);
+                        break;
+                        
+                    case 'societies':
+                        data = await apiRequest('societies');
+                        html = renderSocieties(data);
+                        break;
+                        
+                    case 'api-test':
+                        html = renderAPITest();
+                        break;
+                        
+                    default:
+                        data = await apiRequest('status');
+                        html = renderDashboard(data);
+                }
+                
+                document.getElementById('main-content').innerHTML = html;
+                
+                // 更新导航激活状态
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                const activeLink = document.querySelector(`.nav-link[onclick*="${section}"]`);
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                }
+                
+            } catch (error) {
+                showError(`Failed to load ${section}: ${error.message}`);
+            }
+        }
+        
+        // 渲染学生页面
+        function renderStudents(data) {
+            let html = `
+                <section class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Student Directory</h2>
+                        <p>Browse and connect with students from Oxford Brookes University</p>
+                    </div>
+            `;
+            
+            if (data.status === 'success' && data.data && data.data.length > 0) {
+                html += `<div class="students-grid">`;
+                
+                data.data.forEach(student => {
+                    html += `
+                        <div class="student-card">
+                            <div class="student-header">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div>
+                                    <h3>${student.nickname || 'Unknown'}</h3>
+                                    <p class="faculty">${student.faculty || 'Not specified'}</p>
+                                </div>
+                            </div>
+                            <div class="student-details">
+                                <div class="detail">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    ${student.academic_level || 'N/A'}
+                                </div>
+                                <div class="detail">
+                                    <i class="fas fa-book"></i>
+                                    ${student.major || 'Undeclared'}
+                                </div>
+                            </div>
+                            ${student.interests ? `
+                                <div class="student-interests">
+                                    ${student.interests.split(',').slice(0, 3).map(interest => `
+                                        <span class="interest-tag">${interest.trim()}</span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            } else {
+                html += `<p class="no-data">No student data available.</p>`;
+            }
+            
+            html += `</section>`;
+            return html;
+        }
+        
+        // 渲染社团页面
+        function renderSocieties(data) {
+            let html = `
+                <section class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-people-group"></i> University Societies</h2>
+                        <p>Explore and join student societies at Oxford Brookes</p>
+                    </div>
+            `;
+            
+            if (data.status === 'success' && data.data && data.data.length > 0) {
+                html += `<div class="societies-container">`;
+                
+                data.data.forEach(society => {
+                    html += `
+                        <div class="society-card">
+                            <div class="society-header">
+                                <div class="society-icon">
+                                    <i class="fas fa-people-group"></i>
+                                </div>
+                                <div>
+                                    <h3>${society.society_name}</h3>
+                                    <span class="society-category">${society.society_category || 'General'}</span>
+                                </div>
+                            </div>
+                            <p>${society.description || 'No description available.'}</p>
+                            ${society.member_count ? `
+                                <div class="society-members">
+                                    <i class="fas fa-users"></i> ${society.member_count} members
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            } else {
+                html += `<p class="no-data">No society data available.</p>`;
+            }
+            
+            html += `</section>`;
+            return html;
+        }
+        
+        // 渲染API测试页面
+        function renderAPITest() {
+            return `
+                <section class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-code"></i> API Testing Interface</h2>
+                        <p>Test the BrookesConnect API endpoints</p>
+                    </div>
+                    <div class="api-controls">
+                        <button class="api-btn" onclick="testAPI('status')">
+                            <i class="fas fa-server"></i> System Status
+                        </button>
+                        <button class="api-btn" onclick="testAPI('students')">
+                            <i class="fas fa-users"></i> Get Students
+                        </button>
+                        <button class="api-btn" onclick="testAPI('societies')">
+                            <i class="fas fa-people-group"></i> Get Societies
+                        </button>
+                        <button class="api-btn" onclick="testAPI('analytics')">
+                            <i class="fas fa-chart-bar"></i> Get Analytics
+                        </button>
+                    </div>
+                    <div class="api-result">
+                        <div class="api-result-header">
+                            <h3><i class="fas fa-terminal"></i> API Response</h3>
+                            <button onclick="clearResult()" class="btn-clear">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                        <pre id="api-result-content">Click a button above to test an endpoint</pre>
+                    </div>
+                </section>
+            `;
+        }
+        
+        // API测试函数
+        async function testAPI(action) {
+            const resultContent = document.getElementById('api-result-content');
+            if (!resultContent) return;
+            
+            resultContent.textContent = 'Requesting...';
+            
+            try {
+                const data = await apiRequest(action);
+                resultContent.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultContent.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function clearResult() {
+            const resultContent = document.getElementById('api-result-content');
+            if (resultContent) {
+                resultContent.textContent = 'Click a button above to test an endpoint';
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('BrookesConnect Initializing...');
+            
+            // 暴露函数到全局
+            window.showSection = showSection;
+            window.testAPI = testAPI;
+            window.clearResult = clearResult;
+            
+            // 开始加载数据
+            await loadInitialData();
+            
+            console.log('BrookesConnect Ready!');
+        });
+    </script>
+</body>
+</html>

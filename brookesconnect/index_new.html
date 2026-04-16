@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BrookesConnect - 学生匹配平台</title>
+    
+    <!-- 字体和图标 - 使用CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* 主容器 - 竖排滑动 */
+        .scroll-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 20px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 登录卡片 */
+        .login-card {
+            background: white;
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 4rem;
+            color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 标签切换 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab i {
+            margin-right: 8px;
+        }
+
+        /* 表单 */
+        .form-container {
+            display: block;
+        }
+
+        .form-container.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-group label i {
+            color: #667eea;
+            margin-right: 8px;
+            width: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input,
+        .input-wrapper select {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-wrapper i:not(.toggle-password) {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .input-wrapper input:focus,
+        .input-wrapper select:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        /* 密码强度 */
+        .password-strength {
+            margin-top: 10px;
+        }
+
+        .strength-bar {
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .strength-bar-fill {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        /* 按钮 */
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 消息提示 */
+        .message {
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border-left: 5px solid #c33;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            border-left: 5px solid #3c3;
+        }
+
+        /* 主界面样式 */
+        .user-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar-large {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .user-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            margin-top: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 15px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #f8f9fa;
+            border: none;
+            padding: 20px 15px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .action-btn i {
+            font-size: 1.8rem;
+            color: #667eea;
+        }
+
+        .action-btn span {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #mainContent {
+            display: none;
+        }
+
+        #initialLoading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="initialLoading">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 20px;">Loading BrookesConnect...</p>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="scroll-container" id="mainContent"></div>
+
+    <script>
+        // 检查登录状态
+        function checkLogin() {
+            const user = localStorage.getItem('brookes_user');
+            if (!user) {
+                showLoginPage();
+            } else {
+                showMainPage(JSON.parse(user));
+            }
+            document.getElementById('initialLoading').style.display = 'none';
+        }
+
+        // 显示登录页面
+        function showLoginPage() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.style.display = 'block';
+            mainContent.innerHTML = `
+                <div class="card login-card">
+                    <div class="logo">
+                        <i class="fas fa-university"></i>
+                        <h1>BrookesConnect</h1>
+                        <p>Oxford Brookes University</p>
+                    </div>
+
+                    <div id="message" class="message"></div>
+
+                    <div class="tab-container">
+                        <div class="tab active" id="loginTab" onclick="switchTab('login')">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </div>
+                        <div class="tab" id="registerTab" onclick="switchTab('register')">
+                            <i class="fas fa-user-plus"></i> Register
+                        </div>
+                    </div>
+
+                    <!-- 登录表单 -->
+                    <div id="loginForm" class="form-container">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Email</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="loginEmail" placeholder="your.name@brookes.ac.uk">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-lock"></i> Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="loginPassword" placeholder="Enter your password">
+                            </div>
+                        </div>
+
+                        <button class="btn-submit" onclick="handleLogin()">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </div>
+
+                    <!-- 注册表单 -->
+                    <div id="registerForm" class="form-container hidden">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Brookes Email</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="regEmail" placeholder="your.name@brookes.ac.uk">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Nickname</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="regNickname" placeholder="How should we call you?">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-building"></i> Faculty</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-building"></i>
+                                <select id="regFaculty">
+                                    <option value="">Select your faculty</option>
+                                    <option value="Business School">Business School</option>
+                                    <option value="Technology">Technology, Design and Environment</option>
+                                    <option value="Health Sciences">Health and Life Sciences</option>
+                                    <option value="Humanities">Humanities and Social Sciences</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-graduation-cap"></i> Academic Level</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-graduation-cap"></i>
+                                <select id="regLevel">
+                                    <option value="">Select level</option>
+                                    <option value="Foundation">Foundation</option>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Postgraduate">Postgraduate</option>
+                                    <option value="PhD">PhD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-book"></i> Major</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-book"></i>
+                                <input type="text" id="regMajor" placeholder="e.g. Computer Science">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar"></i> Year</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar"></i>
+                                <select id="regYear">
+                                    <option value="">Select year</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-lock"></i> Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="regPassword" placeholder="Create a password">
+                            </div>
+                        </div>
+
+                        <button class="btn-submit" onclick="handleRegister()">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 显示主页面
+        function showMainPage(user) {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.style.display = 'block';
+            mainContent.innerHTML = `
+                <!-- 用户卡片 -->
+                <div class="card user-card">
+                    <div class="user-profile">
+                        <div class="user-avatar-large">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="user-info">
+                            <h2>${user.nickname}</h2>
+                            <p><i class="fas fa-envelope"></i> ${user.email}</p>
+                            <p><i class="fas fa-building"></i> ${user.faculty}</p>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+                            <div class="stat-number">156</div>
+                            <div class="stat-label">Students</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-people-group"></i></div>
+                            <div class="stat-number">28</div>
+                            <div class="stat-label">Societies</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-handshake"></i></div>
+                            <div class="stat-number">342</div>
+                            <div class="stat-label">Matches</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速操作 -->
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="alert('Students page coming soon')">
+                            <i class="fas fa-users"></i>
+                            <span>Students</span>
+                        </button>
+                        <button class="action-btn" onclick="alert('Societies page coming soon')">
+                            <i class="fas fa-people-group"></i>
+                            <span>Societies</span>
+                        </button>
+                        <button class="action-btn" onclick="alert('Matches page coming soon')">
+                            <i class="fas fa-heart"></i>
+                            <span>Matches</span>
+                        </button>
+                        <button class="action-btn" onclick="alert('Profile page coming soon')">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 欢迎卡片 -->
+                <div class="card">
+                    <h3 style="margin-bottom: 10px;">Welcome to BrookesConnect!</h3>
+                    <p style="color: #666;">Connect with fellow students, join societies, and find study partners based on shared interests.</p>
+                </div>
+            `;
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = `message ${type}`;
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // 处理登录
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // 简单验证
+            const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                localStorage.setItem('brookes_user', JSON.stringify(user));
+                showMessage('Login successful!', 'success');
+                setTimeout(() => {
+                    showMainPage(user);
+                }, 1000);
+            } else {
+                showMessage('Invalid email or password', 'error');
+            }
+        }
+
+        // 处理注册
+        function handleRegister() {
+            const email = document.getElementById('regEmail').value;
+            const nickname = document.getElementById('regNickname').value;
+            const faculty = document.getElementById('regFaculty').value;
+            const level = document.getElementById('regLevel').value;
+            const major = document.getElementById('regMajor').value;
+            const year = document.getElementById('regYear').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (!email || !nickname || !faculty || !level || !major || !year || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!email.endsWith('@brookes.ac.uk')) {
+                showMessage('Please use your Brookes email', 'error');
+                return;
+            }
+            
+            // 保存用户
+            const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+            
+            if (users.some(u => u.email === email)) {
+                showMessage('Email already registered', 'error');
+                return;
+            }
+            
+            const newUser = {
+                id: Date.now(),
+                email,
+                nickname,
+                faculty,
+                level,
+                major,
+                year,
+                password
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('brookes_users', JSON.stringify(users));
+            localStorage.setItem('brookes_user', JSON.stringify(newUser));
+            
+            showMessage('Registration successful!', 'success');
+            setTimeout(() => {
+                showMainPage(newUser);
+            }, 1000);
+        }
+
+        // 登出
+        function logout() {
+            localStorage.removeItem('brookes_user');
+            showLoginPage();
+        }
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkLogin, 1500);
+        });
+
+        // 导出函数
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.logout = logout;
+    </script>
+</body>
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrookesConnect - Login & Register</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #003366, #0055aa);
+            padding: 20px;
+        }
+        
+        .auth-box {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-header .logo {
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .auth-tab.active {
+            color: #003366;
+            border-bottom: 3px solid #FF6600;
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #003366;
+            outline: none;
+        }
+        
+        .btn-auth {
+            width: 100%;
+            padding: 14px;
+            background: #003366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .btn-auth:hover {
+            background: #002244;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .auth-footer a {
+            color: #FF6600;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .strength-bar {
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        
+        .strength-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-university"></i>
+                    <span>BrookesConnect</span>
+                </div>
+                <p>Oxford Brookes University Student Platform</p>
+            </div>
+            
+            <div id="authMessage" class="error-message"></div>
+            <div id="authSuccess" class="success-message"></div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchTab('register')">Register</div>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" placeholder="your.email@brookes.ac.uk" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" class="btn-auth">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                
+                <div class="auth-footer">
+                    <a href="#" onclick="switchTab('register')">Don't have an account? Register</a>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Brookes Email</label>
+                    <input type="email" id="regEmail" placeholder="your.name@brookes.ac.uk" required 
+                           pattern=".+@brookes\.ac\.uk$" title="Must be a valid Brookes email">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Nickname</label>
+                    <input type="text" id="regNickname" placeholder="How should we call you?" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Faculty</label>
+                    <select id="regFaculty" required>
+                        <option value="">Select your faculty</option>
+                        <option value="Business School">Business School</option>
+                        <option value="Technology, Design and Environment">Technology, Design and Environment</option>
+                        <option value="Health and Life Sciences">Health and Life Sciences</option>
+                        <option value="Humanities and Social Sciences">Humanities and Social Sciences</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-graduation-cap"></i> Academic Level</label>
+                    <select id="regLevel" required>
+                        <option value="">Select level</option>
+                        <option value="Foundation">Foundation</option>
+                        <option value="Undergraduate">Undergraduate</option>
+                        <option value="Postgraduate">Postgraduate</option>
+                        <option value="PhD">PhD</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-book"></i> Major/Subject</label>
+                    <input type="text" id="regMajor" placeholder="e.g. Computer Science" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Year of Study</label>
+                    <select id="regYear" required>
+                        <option value="">Select year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                        <option value="5">5th+ Year</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="regPassword" placeholder="Create a password" required 
+                           onkeyup="checkPasswordStrength(this.value)">
+                    <div class="password-strength">
+                        <div class="strength-bar">
+                            <div id="strengthBar" class="strength-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="strengthText">Enter password</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm your password" required>
+                </div>
+                
+                <button type="submit" class="btn-auth">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+                
+                <div class="auth-footer">
+                    <a href="#" onclick="switchTab('login')">Already have an account? Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_ENDPOINTS: [
+                'api/matching.php',
+                'emergency_fix.php',
+                'http://localhost/BrookesConnect/api/matching.php'
+            ]
+        };
+        
+        let currentWorkingAPI = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            await detectWorkingAPI();
+        });
+        
+        // Detect working API
+        async function detectWorkingAPI() {
+            for (let endpoint of CONFIG.API_ENDPOINTS) {
+                try {
+                    const response = await fetch(`${endpoint}?action=status&_t=${Date.now()}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            currentWorkingAPI = endpoint;
+                            console.log('API connected:', endpoint);
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.log('API failed:', endpoint);
+                }
+            }
+            console.log('No working API found, using mock mode');
+            return false;
+        }
+        
+        // Switch between login and register tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelector('.auth-tab').classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+            
+            // Clear messages
+            document.getElementById('authMessage').style.display = 'none';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+        
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            showMessage('Logging in...', 'info');
+            
+            try {
+                // In a real app, you would send this to your backend
+                // For demo, we'll check against localStorage
+                const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+                const user = users.find(u => u.email === email);
+                
+                if (user && user.password === password) {
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = 'working_index.html';
+                    }, 1500);
+                } else {
+                    showError('Invalid email or password');
+                }
+            } catch (error) {
+                showError('Login failed: ' + error.message);
+            }
+        }
+        
+        // Handle register
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('regEmail').value;
+            const nickname = document.getElementById('regNickname').value;
+            const faculty = document.getElementById('regFaculty').value;
+            const level = document.getElementById('regLevel').value;
+            const major = document.getElementById('regMajor').value;
+            const year = document.getElementById('regYear').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            // Validation
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            if (!email.endsWith('@brookes.ac.uk')) {
+                showError('Please use your Brookes email address');
+                return;
+            }
+            
+            showMessage('Creating account...', 'info');
+            
+            try {
+                // Create user object
+                const user = {
+                    id: Date.now(),
+                    email: email,
+                    nickname: nickname,
+                    faculty: faculty,
+                    academic_level: level,
+                    major: major,
+                    year_of_study: year,
+                    password: password,
+                    created_at: new Date().toISOString(),
+                    is_active: true
+                };
+                
+                // Save to localStorage (in real app, send to database)
+                const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+                
+                // Check if email already exists
+                if (users.some(u => u.email === email)) {
+                    showError('Email already registered');
+                    return;
+                }
+                
+                users.push(user);
+                localStorage.setItem('brookes_users', JSON.stringify(users));
+                
+                // Auto login
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                
+                showSuccess('Registration successful! Redirecting...');
+                
+                // Try to save to database if API is available
+                if (currentWorkingAPI) {
+                    try {
+                        await fetch(`${currentWorkingAPI}?action=register`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(user)
+                        });
+                    } catch (e) {
+                        console.log('Could not save to database, saved locally only');
+                    }
+                }
+                
+                setTimeout(() => {
+                    window.location.href = 'working_index.html';
+                }, 1500);
+                
+            } catch (error) {
+                showError('Registration failed: ' + error.message);
+            }
+        }
+        
+        // Check password strength
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            
+            if (password.length >= 6) strength += 25;
+            if (password.match(/[a-z]+/)) strength += 25;
+            if (password.match(/[A-Z]+/)) strength += 25;
+            if (password.match(/[0-9]+/)) strength += 25;
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength <= 25) {
+                strengthBar.style.backgroundColor = '#dc3545';
+                strengthText.textContent = 'Weak';
+            } else if (strength <= 50) {
+                strengthBar.style.backgroundColor = '#ffc107';
+                strengthText.textContent = 'Fair';
+            } else if (strength <= 75) {
+                strengthBar.style.backgroundColor = '#17a2b8';
+                strengthText.textContent = 'Good';
+            } else {
+                strengthBar.style.backgroundColor = '#28a745';
+                strengthText.textContent = 'Strong';
+            }
+        }
+        
+        // UI Helpers
+        function showError(message) {
+            const msgEl = document.getElementById('authMessage');
+            msgEl.textContent = message;
+            msgEl.style.display = 'block';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const msgEl = document.getElementById('authSuccess');
+            msgEl.textContent = message;
+            msgEl.style.display = 'block';
+            document.getElementById('authMessage').style.display = 'none';
+        }
+        
+        function showMessage(message, type) {
+            console.log(`[${type}] ${message}`);
+        }
+        
+        // Export functions
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.checkPasswordStrength = checkPasswordStrength;
+    </script>
+</body>
+</html>

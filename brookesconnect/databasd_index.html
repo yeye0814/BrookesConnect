@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BrookesConnect - 数据库连接版</title>
+    
+    <!-- 字体和图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* 主容器 - 竖排滑动 */
+        .scroll-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 20px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 登录卡片 */
+        .login-card {
+            background: white;
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 4rem;
+            color: #667eea;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        /* 标签切换 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab i {
+            margin-right: 8px;
+        }
+
+        /* 表单 */
+        .form-container {
+            display: block;
+        }
+
+        .form-container.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group label i {
+            color: #667eea;
+            margin-right: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input,
+        .input-wrapper select {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+        }
+
+        .input-wrapper input:focus,
+        .input-wrapper select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        /* 按钮 */
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 消息提示 */
+        .message {
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border-left: 5px solid #c33;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            border-left: 5px solid #3c3;
+        }
+
+        .message.info {
+            background: #e6f3ff;
+            color: #2196F3;
+            border-left: 5px solid #2196F3;
+        }
+
+        /* 主界面样式 */
+        .user-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar-large {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .user-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            margin-top: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 15px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #f8f9fa;
+            border: none;
+            padding: 20px 15px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn i {
+            font-size: 1.8rem;
+            color: #667eea;
+        }
+
+        .action-btn span {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #initialLoading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .db-status {
+            font-size: 0.9rem;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div id="initialLoading">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 20px;">Connecting to Database...</p>
+        <p id="dbStatus" style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">Initializing</p>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="scroll-container" id="mainContent" style="display: none;"></div>
+
+    <script>
+        // ==================== 学生相关功能 ====================
+
+// 显示学生列表
+async function showStudents() {
+    const mainContent = document.getElementById('mainContent');
+    
+    showLoading('Loading students...');
+    
+    try {
+        let students = [];
+        
+        // 从数据库获取学生数据
+        if (currentWorkingAPI) {
+            try {
+                const response = await fetch(`${currentWorkingAPI}?action=students&_t=${Date.now()}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    students = data.data || [];
+                }
+            } catch (error) {
+                console.log('Failed to fetch students from DB');
+            }
+        }
+        
+        // 如果数据库没有数据，使用本地存储和模拟数据
+        if (students.length === 0) {
+            // 从本地存储获取注册的用户
+            const localUsers = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+            
+            // 模拟学生数据
+            const mockStudents = [
+                {
+                    student_id: 1,
+                    nickname: 'John Smith',
+                    faculty: 'Business School',
+                    academic_level: 'Undergraduate',
+                    major: 'Business Management',
+                    year_of_study: 3,
+                    interests: 'Programming,Football,Music',
+                    email: 'john.smith@brookes.ac.uk'
+                },
+                {
+                    student_id: 2,
+                    nickname: 'Emma Wilson',
+                    faculty: 'Health Sciences',
+                    academic_level: 'Postgraduate',
+                    major: 'Nursing',
+                    year_of_study: 1,
+                    interests: 'Healthcare,Volunteering,Reading',
+                    email: 'emma.wilson@brookes.ac.uk'
+                },
+                {
+                    student_id: 3,
+                    nickname: 'David Chen',
+                    faculty: 'Technology',
+                    academic_level: 'Undergraduate',
+                    major: 'Computer Science',
+                    year_of_study: 2,
+                    interests: 'Coding,AI,Robotics,Gaming',
+                    email: 'david.chen@brookes.ac.uk'
+                },
+                {
+                    student_id: 4,
+                    nickname: 'Sarah Ahmed',
+                    faculty: 'Humanities',
+                    academic_level: 'Undergraduate',
+                    major: 'Psychology',
+                    year_of_study: 3,
+                    interests: 'Research,Counseling,Art',
+                    email: 'sarah.ahmed@brookes.ac.uk'
+                }
+            ];
+            
+            // 合并本地用户和模拟数据
+            students = [
+                ...localUsers.map(u => ({
+                    student_id: u.id,
+                    nickname: u.nickname,
+                    faculty: u.faculty,
+                    academic_level: u.level || u.academic_level,
+                    major: u.major,
+                    year_of_study: u.year,
+                    interests: 'New User',
+                    email: u.email
+                })),
+                ...mockStudents
+            ];
+        }
+        
+        // 渲染学生页面
+        mainContent.innerHTML = `
+            <div class="card">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-users" style="color: #667eea;"></i> Students Directory</h2>
+                    <button class="btn-submit" style="width: auto; padding: 10px 20px;" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                
+                <!-- 搜索框 -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="studentSearch" placeholder="Search students by name, major, or faculty..." onkeyup="filterStudents()">
+                    </div>
+                </div>
+                
+                <!-- 学生列表 -->
+                <div id="studentsList" style="display: flex; flex-direction: column; gap: 15px;">
+                    ${renderStudentCards(students)}
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px; color: #666;">
+                    <i class="fas fa-database"></i> Total: ${students.length} students
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading students:', error);
+        mainContent.innerHTML = `
+            <div class="card">
+                <h3 style="color: #c33;">Error loading students</h3>
+                <button class="btn-submit" onclick="goBack()">Go Back</button>
+            </div>
+        `;
+    }
+}
+
+// 渲染学生卡片
+function renderStudentCards(students) {
+    if (students.length === 0) {
+        return '<p style="text-align: center; color: #666;">No students found</p>';
+    }
+    
+    return students.map(student => `
+        <div class="student-item" style="background: #f8f9fa; border-radius: 15px; padding: 15px;">
+            <div style="display: flex; gap: 15px;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <h4 style="margin-bottom: 5px;">${student.nickname || 'Unknown'}</h4>
+                        <span style="background: #e6f0ff; color: #667eea; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem;">
+                            Year ${student.year_of_study || 'N/A'}
+                        </span>
+                    </div>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">
+                        <i class="fas fa-building"></i> ${student.faculty || 'Not specified'}
+                    </p>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">
+                        <i class="fas fa-book"></i> ${student.major || 'Undeclared'}
+                    </p>
+                    <div style="display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap;">
+                        ${(student.interests || '').split(',').slice(0, 3).map(interest => 
+                            `<span style="background: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; border: 1px solid #e0e0e0;">${interest.trim()}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 过滤学生
+function filterStudents() {
+    const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+    const studentItems = document.querySelectorAll('.student-item');
+    
+    studentItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// ==================== 社团相关功能 ====================
+
+// 显示社团列表
+async function showSocieties() {
+    const mainContent = document.getElementById('mainContent');
+    
+    showLoading('Loading societies...');
+    
+    try {
+        let societies = [];
+        
+        // 从数据库获取社团数据
+        if (currentWorkingAPI) {
+            try {
+                const response = await fetch(`${currentWorkingAPI}?action=societies&_t=${Date.now()}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    societies = data.data || [];
+                }
+            } catch (error) {
+                console.log('Failed to fetch societies from DB');
+            }
+        }
+        
+        // 如果数据库没有数据，使用模拟数据
+        if (societies.length === 0) {
+            societies = [
+                {
+                    society_id: 1,
+                    society_name: 'Computer Science Society',
+                    society_category: 'Academic',
+                    description: 'For CS enthusiasts. Coding workshops, hackathons, and tech talks.',
+                    member_count: 45,
+                    meeting_day: 'Wednesdays'
+                },
+                {
+                    society_id: 2,
+                    society_name: 'Business Society',
+                    society_category: 'Academic',
+                    description: 'Networking events, career workshops, and industry talks.',
+                    member_count: 38,
+                    meeting_day: 'Tuesdays'
+                },
+                {
+                    society_id: 3,
+                    society_name: 'Football Club',
+                    society_category: 'Sports',
+                    description: 'University football team. Weekly training and matches.',
+                    member_count: 32,
+                    meeting_day: 'Mondays & Thursdays'
+                },
+                {
+                    society_id: 4,
+                    society_name: 'Music Society',
+                    society_category: 'Arts',
+                    description: 'For music lovers. Bands, choirs, and music production.',
+                    member_count: 28,
+                    meeting_day: 'Fridays'
+                },
+                {
+                    society_id: 5,
+                    society_name: 'Debate Club',
+                    society_category: 'Academic',
+                    description: 'Public speaking and debate competitions.',
+                    member_count: 25,
+                    meeting_day: 'Wednesdays'
+                },
+                {
+                    society_id: 6,
+                    society_name: 'International Students Association',
+                    society_category: 'Cultural',
+                    description: 'Support and events for international students.',
+                    member_count: 56,
+                    meeting_day: 'Thursdays'
+                }
+            ];
+        }
+        
+        // 渲染社团页面
+        mainContent.innerHTML = `
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-people-group" style="color: #667eea;"></i> University Societies</h2>
+                    <button class="btn-submit" style="width: auto; padding: 10px 20px;" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                
+                <!-- 分类过滤 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding: 5px;">
+                    <button class="filter-btn active" onclick="filterSocieties('all')" style="padding: 8px 15px; border-radius: 20px; border: none; background: #667eea; color: white;">All</button>
+                    <button class="filter-btn" onclick="filterSocieties('Academic')" style="padding: 8px 15px; border-radius: 20px; border: 1px solid #e0e0e0; background: white;">Academic</button>
+                    <button class="filter-btn" onclick="filterSocieties('Sports')" style="padding: 8px 15px; border-radius: 20px; border: 1px solid #e0e0e0; background: white;">Sports</button>
+                    <button class="filter-btn" onclick="filterSocieties('Arts')" style="padding: 8px 15px; border-radius: 20px; border: 1px solid #e0e0e0; background: white;">Arts</button>
+                    <button class="filter-btn" onclick="filterSocieties('Cultural')" style="padding: 8px 15px; border-radius: 20px; border: 1px solid #e0e0e0; background: white;">Cultural</button>
+                </div>
+                
+                <!-- 社团网格 -->
+                <div id="societiesGrid" style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                    ${renderSocietyCards(societies)}
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px; color: #666;">
+                    <i class="fas fa-database"></i> Total: ${societies.length} active societies
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading societies:', error);
+        mainContent.innerHTML = `
+            <div class="card">
+                <h3 style="color: #c33;">Error loading societies</h3>
+                <button class="btn-submit" onclick="goBack()">Go Back</button>
+            </div>
+        `;
+    }
+}
+
+// 渲染社团卡片
+function renderSocietyCards(societies) {
+    return societies.map(society => `
+        <div class="society-card" data-category="${society.society_category || 'General'}" style="background: #f8f9fa; border-radius: 15px; padding: 20px;">
+            <div style="display: flex; gap: 15px;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fas fa-people-group"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <h4 style="margin-bottom: 5px;">${society.society_name}</h4>
+                        <span style="background: ${getCategoryColor(society.society_category)}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem;">
+                            ${society.society_category || 'General'}
+                        </span>
+                    </div>
+                    <p style="color: #666; font-size: 0.9rem; margin: 10px 0;">
+                        ${society.description || 'No description available.'}
+                    </p>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <span style="font-size: 0.85rem;"><i class="fas fa-users"></i> ${society.member_count || 0} members</span>
+                        ${society.meeting_day ? `<span style="font-size: 0.85rem;"><i class="fas fa-calendar"></i> ${society.meeting_day}</span>` : ''}
+                    </div>
+                    <button class="join-btn" style="margin-top: 10px; padding: 8px 15px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer;" onclick="joinSociety(${society.society_id})">
+                        <i class="fas fa-plus"></i> Join Society
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 获取分类颜色
+function getCategoryColor(category) {
+    const colors = {
+        'Academic': '#2196F3',
+        'Sports': '#4CAF50',
+        'Arts': '#9C27B0',
+        'Cultural': '#FF9800',
+        'General': '#607D8B'
+    };
+    return colors[category] || '#607D8B';
+}
+
+// 过滤社团
+function filterSocieties(category) {
+    // 更新按钮样式
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.color = '#333';
+    });
+    event.target.style.background = '#667eea';
+    event.target.style.color = 'white';
+    
+    // 过滤卡片
+    const cards = document.querySelectorAll('.society-card');
+    cards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// 加入社团
+function joinSociety(societyId) {
+    showMessage('Feature coming soon! You will be able to join societies.', 'info');
+}
+
+// ==================== 匹配相关功能 ====================
+
+// 显示匹配页面
+async function showMatches() {
+    const mainContent = document.getElementById('mainContent');
+    
+    mainContent.innerHTML = `
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2><i class="fas fa-heart" style="color: #667eea;"></i> Match Recommendations</h2>
+                <button class="btn-submit" style="width: auto; padding: 10px 20px;" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+            
+            <div style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-handshake" style="font-size: 4rem; color: #667eea; margin-bottom: 20px;"></i>
+                <h3 style="margin-bottom: 10px;">Find Your Perfect Match</h3>
+                <p style="color: #666; margin-bottom: 30px;">Based on your interests and academic profile</p>
+                
+                <button class="btn-submit" style="width: auto; padding: 15px 30px;" onclick="findMatches()">
+                    <i class="fas fa-search"></i> Find Matches Now
+                </button>
+            </div>
+            
+            <!-- 匹配结果会显示在这里 -->
+            <div id="matchesResults" style="display: none;">
+                <!-- 匹配结果将动态加载 -->
+            </div>
+        </div>
+    `;
+}
+
+// 查找匹配
+async function findMatches() {
+    const resultsDiv = document.getElementById('matchesResults');
+    const currentUser = JSON.parse(localStorage.getItem('brookes_user') || 'null');
+    
+    if (!currentUser) {
+        showMessage('Please login first', 'error');
+        return;
+    }
+    
+    showLoading('Finding matches...');
+    
+    // 模拟匹配数据
+    setTimeout(() => {
+        const matches = [
+            {
+                name: 'Sarah Johnson',
+                faculty: 'Technology',
+                major: 'Computer Science',
+                matchScore: 95,
+                interests: ['Coding', 'AI', 'Gaming'],
+                commonInterests: 5
+            },
+            {
+                name: 'Michael Brown',
+                faculty: 'Business School',
+                major: 'Business Management',
+                matchScore: 87,
+                interests: ['Networking', 'Startups', 'Marketing'],
+                commonInterests: 4
+            },
+            {
+                name: 'Lisa Wang',
+                faculty: 'Health Sciences',
+                major: 'Psychology',
+                matchScore: 82,
+                interests: ['Research', 'Counseling', 'Art'],
+                commonInterests: 3
+            }
+        ];
+        
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+            <h3 style="margin: 20px 0 15px;">Top Matches for You</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                ${matches.map(match => `
+                    <div style="background: #f8f9fa; border-radius: 15px; padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h4 style="margin-bottom: 5px;">${match.name}</h4>
+                                <p style="color: #666; font-size: 0.9rem;">${match.major} • ${match.faculty}</p>
+                            </div>
+                            <div style="background: ${match.matchScore > 90 ? '#4CAF50' : '#667eea'}; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold;">
+                                ${match.matchScore}% Match
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <p style="font-size: 0.9rem; margin-bottom: 5px;"><i class="fas fa-heart" style="color: #667eea;"></i> ${match.commonInterests} common interests</p>
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                ${match.interests.map(i => `<span style="background: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem;">${i}</span>`).join('')}
+                            </div>
+                        </div>
+                        <button style="margin-top: 15px; padding: 10px; background: #667eea; color: white; border: none; border-radius: 10px; width: 100%; cursor: pointer;" onclick="connectWithStudent('${match.name}')">
+                            <i class="fas fa-handshake"></i> Connect
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        hideLoading();
+    }, 1500);
+}
+
+// 连接学生
+function connectWithStudent(name) {
+    showMessage(`Connection request sent to ${name}!`, 'success');
+}
+
+// ==================== 个人资料功能 ====================
+
+// 显示个人资料
+function showProfile() {
+    const currentUser = JSON.parse(localStorage.getItem('brookes_user') || 'null');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (!currentUser) {
+        showLoginPage();
+        return;
+    }
+    
+    mainContent.innerHTML = `
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2><i class="fas fa-user" style="color: #667eea;"></i> My Profile</h2>
+                <button class="btn-submit" style="width: auto; padding: 10px 20px;" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+            
+            <!-- 头像 -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                    <i class="fas fa-user-graduate" style="font-size: 3rem; color: white;"></i>
+                </div>
+                <h3>${currentUser.nickname}</h3>
+                <p style="color: #666;">${currentUser.email}</p>
+            </div>
+            
+            <!-- 个人信息 -->
+            <div style="background: #f8f9fa; border-radius: 15px; padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                    <div>
+                        <label style="color: #666; font-size: 0.9rem;">Faculty</label>
+                        <p style="font-weight: 500;">${currentUser.faculty || 'Not specified'}</p>
+                    </div>
+                    <div>
+                        <label style="color: #666; font-size: 0.9rem;">Academic Level</label>
+                        <p style="font-weight: 500;">${currentUser.level || currentUser.academic_level || 'Not specified'}</p>
+                    </div>
+                    <div>
+                        <label style="color: #666; font-size: 0.9rem;">Major</label>
+                        <p style="font-weight: 500;">${currentUser.major || 'Not specified'}</p>
+                    </div>
+                    <div>
+                        <label style="color: #666; font-size: 0.9rem;">Year of Study</label>
+                        <p style="font-weight: 500;">Year ${currentUser.year || currentUser.year_of_study || '1'}</p>
+                    </div>
+                    <div>
+                        <label style="color: #666; font-size: 0.9rem;">Member Since</label>
+                        <p style="font-weight: 500;">${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 兴趣标签 -->
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">Interests</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;">Coding</span>
+                    <span style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;">Music</span>
+                    <span style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;">Sports</span>
+                    <span style="background: #667eea; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer;" onclick="addInterest()">
+                        <i class="fas fa-plus"></i> Add
+                    </span>
+                </div>
+            </div>
+            
+            <!-- 我的社团 -->
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">My Societies</h4>
+                <div style="background: #f8f9fa; border-radius: 15px; padding: 15px;">
+                    <p style="color: #666; text-align: center;">You haven't joined any societies yet</p>
+                    <button style="margin-top: 10px; padding: 10px; background: #667eea; color: white; border: none; border-radius: 10px; width: 100%; cursor: pointer;" onclick="showSocieties()">
+                        Browse Societies
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 编辑按钮 -->
+            <button style="margin-top: 20px; padding: 15px; background: #f0f0f0; border: none; border-radius: 15px; width: 100%; cursor: pointer;" onclick="editProfile()">
+                <i class="fas fa-edit"></i> Edit Profile
+            </button>
+        </div>
+    `;
+}
+
+// 编辑个人资料
+function editProfile() {
+    showMessage('Profile editing feature coming soon!', 'info');
+}
+
+// 添加兴趣
+function addInterest() {
+    const interest = prompt('Enter your interest:');
+    if (interest) {
+        showMessage(`Interest "${interest}" added!`, 'success');
+    }
+}
+
+// ==================== 通用功能 ====================
+
+// 显示加载
+function showLoading(message) {
+    const mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = `
+        <div class="card" style="text-align: center; padding: 50px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+// 隐藏加载
+function hideLoading() {
+    // 不需要实现，因为内容会被替换
+}
+
+// 返回上一页
+function goBack() {
+    const user = JSON.parse(localStorage.getItem('brookes_user') || 'null');
+    if (user) {
+        showMainPage(user);
+    } else {
+        showLoginPage();
+    }
+}
+        // ==================== 配置 ====================
+        const CONFIG = {
+            API_ENDPOINTS: [
+                'emergency_fix.php',
+                'api/matching.php',
+                'http://localhost/BrookesConnect/emergency_fix.php',
+                'http://localhost/emergency_fix.php',
+                'emergency_fix.php?action=status'
+            ],
+            TIMEOUT: 5000
+        };
+
+        // ==================== 全局变量 ====================
+        let currentWorkingAPI = null;
+        let databaseStats = {
+            students: 0,
+            societies: 0,
+            matches: 0
+        };
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            updateDBStatus('检测数据库连接...');
+            
+            // 尝试连接数据库
+            await detectDatabase();
+            
+            // 检查登录状态
+            checkLoginStatus();
+        });
+
+        // 更新数据库连接状态
+        function updateDBStatus(message) {
+            const statusEl = document.getElementById('dbStatus');
+            if (statusEl) {
+                statusEl.textContent = message;
+            }
+            console.log('DB Status:', message);
+        }
+
+        // 检测数据库连接
+        async function detectDatabase() {
+            for (let endpoint of CONFIG.API_ENDPOINTS) {
+                try {
+                    updateDBStatus(`尝试连接: ${endpoint}`);
+                    
+                    const response = await fetch(`${endpoint}${endpoint.includes('?') ? '&' : '?'}_t=${Date.now()}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('API Response:', data);
+                        
+                        // 检查是否成功连接数据库
+                        if (data.status === 'success') {
+                            currentWorkingAPI = endpoint.split('?')[0]; // 去掉查询参数
+                            updateDBStatus(`✅ 数据库连接成功: ${data.database || 'matching'}`);
+                            
+                            // 获取统计数据
+                            if (data.statistics) {
+                                databaseStats = data.statistics;
+                            } else if (data.student_count !== undefined) {
+                                databaseStats = {
+                                    students: data.student_count || 0,
+                                    societies: data.society_count || 0,
+                                    matches: data.match_count || 0
+                                };
+                            }
+                            
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.log(`Endpoint failed: ${endpoint}`, error.message);
+                }
+            }
+            
+            updateDBStatus('⚠️ 使用本地模式 (未连接到数据库)');
+            // 使用模拟数据
+            databaseStats = {
+                students: 156,
+                societies: 28,
+                matches: 342
+            };
+            return false;
+        }
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            const user = localStorage.getItem('brookes_user');
+            if (user) {
+                showMainPage(JSON.parse(user));
+            } else {
+                showLoginPage();
+            }
+            document.getElementById('initialLoading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // 显示登录页面
+        function showLoginPage() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="card login-card">
+                    <div class="logo">
+                        <i class="fas fa-university"></i>
+                        <h1>BrookesConnect</h1>
+                    </div>
+
+                    <!-- 数据库状态 -->
+                    <div class="db-status" style="background: #f0f0f0; color: #333; text-align: center;">
+                        <i class="fas fa-database"></i> 
+                        ${currentWorkingAPI ? '✅ Database Connected' : '⚠️ Local Mode'}
+                    </div>
+
+                    <div id="message" class="message"></div>
+
+                    <div class="tab-container">
+                        <div class="tab active" id="loginTab" onclick="switchTab('login')">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </div>
+                        <div class="tab" id="registerTab" onclick="switchTab('register')">
+                            <i class="fas fa-user-plus"></i> Register
+                        </div>
+                    </div>
+
+                    <!-- 登录表单 -->
+                    <div id="loginForm" class="form-container">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Email</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="loginEmail" placeholder="your.name@brookes.ac.uk">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-lock"></i> Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="loginPassword" placeholder="Enter your password">
+                            </div>
+                        </div>
+
+                        <button class="btn-submit" onclick="handleLogin()">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </div>
+
+                    <!-- 注册表单 -->
+                    <div id="registerForm" class="form-container hidden">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Brookes Email</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="regEmail" placeholder="your.name@brookes.ac.uk">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Nickname</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="regNickname" placeholder="How should we call you?">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-building"></i> Faculty</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-building"></i>
+                                <select id="regFaculty">
+                                    <option value="">Select your faculty</option>
+                                    <option value="Business School">Business School</option>
+                                    <option value="Technology">Technology, Design and Environment</option>
+                                    <option value="Health Sciences">Health and Life Sciences</option>
+                                    <option value="Humanities">Humanities and Social Sciences</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-graduation-cap"></i> Academic Level</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-graduation-cap"></i>
+                                <select id="regLevel">
+                                    <option value="">Select level</option>
+                                    <option value="Foundation">Foundation</option>
+                                    <option value="Undergraduate">Undergraduate</option>
+                                    <option value="Postgraduate">Postgraduate</option>
+                                    <option value="PhD">PhD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-book"></i> Major</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-book"></i>
+                                <input type="text" id="regMajor" placeholder="e.g. Computer Science">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar"></i> Year</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-calendar"></i>
+                                <select id="regYear">
+                                    <option value="">Select year</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fas fa-lock"></i> Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="regPassword" placeholder="Create a password">
+                            </div>
+                        </div>
+
+                        <button class="btn-submit" onclick="handleRegister()">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 显示主页面
+        function showMainPage(user) {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <!-- 用户卡片 -->
+                <div class="card user-card">
+                    <div class="user-profile">
+                        <div class="user-avatar-large">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="user-info">
+                            <h2>${user.nickname}</h2>
+                            <p><i class="fas fa-envelope"></i> ${user.email}</p>
+                            <p><i class="fas fa-building"></i> ${user.faculty}</p>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+
+                <!-- 统计卡片 - 从数据库获取 -->
+                <div class="card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+                            <div class="stat-number">${databaseStats.students}</div>
+                            <div class="stat-label">Students</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-people-group"></i></div>
+                            <div class="stat-number">${databaseStats.societies}</div>
+                            <div class="stat-label">Societies</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="fas fa-handshake"></i></div>
+                            <div class="stat-number">${databaseStats.matches}</div>
+                            <div class="stat-label">Matches</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据库状态卡片 -->
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">System Status</h3>
+                    <div class="status-item">
+                        <span><i class="fas fa-database"></i> Database</span>
+                        <span class="status-badge ${currentWorkingAPI ? 'status-good' : 'status-bad'}">
+                            ${currentWorkingAPI ? 'Connected' : 'Local Mode'}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span><i class="fas fa-server"></i> API Endpoint</span>
+                        <span style="font-size: 0.8rem;">${currentWorkingAPI || 'None'}</span>
+                    </div>
+                    <div class="status-item">
+                        <span><i class="fas fa-user"></i> Logged in as</span>
+                        <span>${user.email}</span>
+                    </div>
+                </div>
+
+                <!-- 快速操作 -->
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="window.location.href='students.html'">
+                            <i class="fas fa-users"></i>
+                            <span>Students</span>
+                        </button>
+                        <button class="action-btn" onclick="window.location.href='societies.html'">
+                            <i class="fas fa-people-group"></i>
+                            <span>Societies</span>
+                        </button>
+                        <button class="action-btn" onclick="window.location.href='matches.html'">
+                            <i class="fas fa-heart"></i>
+                            <span>Matches</span>
+                        </button>
+                        <button class="action-btn" onclick="window.location.href='profile.html'">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 欢迎卡片 -->
+                <div class="card">
+                    <h3 style="margin-bottom: 10px;">Welcome to BrookesConnect!</h3>
+                    <p style="color: #666;">Connect with ${databaseStats.students} students across ${databaseStats.societies} societies. ${databaseStats.matches} successful matches made!</p>
+                </div>
+            `;
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('message');
+            if (!msgEl) return;
+            
+            msgEl.textContent = text;
+            msgEl.className = `message ${type}`;
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        // 处理登录
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            showMessage('Logging in...', 'info');
+            
+            // 如果有数据库连接，尝试数据库登录
+            if (currentWorkingAPI) {
+                try {
+                    const response = await fetch(`${currentWorkingAPI}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'success' && data.user) {
+                        localStorage.setItem('brookes_user', JSON.stringify(data.user));
+                        showMessage('Login successful!', 'success');
+                        setTimeout(() => showMainPage(data.user), 1000);
+                        return;
+                    }
+                } catch (error) {
+                    console.log('Database login failed, trying local');
+                }
+            }
+            
+            // 本地存储登录
+            const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                localStorage.setItem('brookes_user', JSON.stringify(user));
+                showMessage('Login successful!', 'success');
+                setTimeout(() => showMainPage(user), 1000);
+            } else {
+                showMessage('Invalid email or password', 'error');
+            }
+        }
+
+        // 处理注册
+        async function handleRegister() {
+            const email = document.getElementById('regEmail').value;
+            const nickname = document.getElementById('regNickname').value;
+            const faculty = document.getElementById('regFaculty').value;
+            const level = document.getElementById('regLevel').value;
+            const major = document.getElementById('regMajor').value;
+            const year = document.getElementById('regYear').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (!email || !nickname || !faculty || !level || !major || !year || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!email.endsWith('@brookes.ac.uk')) {
+                showMessage('Please use your Brookes email', 'error');
+                return;
+            }
+            
+            showMessage('Creating account...', 'info');
+            
+            const newUser = {
+                id: Date.now(),
+                email,
+                nickname,
+                faculty,
+                level,
+                major,
+                year,
+                password
+            };
+            
+            // 如果有数据库连接，尝试保存到数据库
+            if (currentWorkingAPI) {
+                try {
+                    const response = await fetch(`${currentWorkingAPI}?action=register`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(newUser)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            localStorage.setItem('brookes_user', JSON.stringify(data.user || newUser));
+                            showMessage('Registration successful!', 'success');
+                            setTimeout(() => showMainPage(data.user || newUser), 1000);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Database registration failed, saving locally');
+                }
+            }
+            
+            // 本地存储
+            const users = JSON.parse(localStorage.getItem('brookes_users') || '[]');
+            
+            if (users.some(u => u.email === email)) {
+                showMessage('Email already registered', 'error');
+                return;
+            }
+            
+            users.push(newUser);
+            localStorage.setItem('brookes_users', JSON.stringify(users));
+            localStorage.setItem('brookes_user', JSON.stringify(newUser));
+            
+            showMessage('Registration successful!', 'success');
+            setTimeout(() => showMainPage(newUser), 1000);
+        }
+
+        // 登出
+        function logout() {
+            localStorage.removeItem('brookes_user');
+            showLoginPage();
+        }
+
+        // 导出函数
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.logout = logout;
+    </script>
+</body>
+</html>
